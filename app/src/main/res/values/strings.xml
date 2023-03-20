@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Video magic cut</string>
+    <string name="select_video_button">Select video</string>
+    <string name="video_label">Video: </string>
+    <string name="magic_button">Magic</string>
+    <string name="repeat_magic_button">Repeat magic</string>
+    <string name="output_video_label">Magic cut video is saved in Gallery: </string>
+    <string name="back_button">Back</string>
+    <string name="open_settings_button">Open settings</string>
+    <string name="no_files_label">No %1$s files in Gallery</string>
+    <string name="permissions_label">You want to read from media gallery, so I\'m going to have to ask for permission.</string>
+</resources>
