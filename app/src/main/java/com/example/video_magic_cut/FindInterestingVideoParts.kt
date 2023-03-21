@@ -1,10 +1,11 @@
 package com.example.video_magic_cut
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import android.util.Range
-import com.example.video_magic_cut.media.Utils
 import com.example.video_magic_cut.media.Utils.createOutputUri
 import com.example.video_magic_cut.media.Utils.markVideoAsCompletedInGallery
 import com.example.video_magic_cut.media.VideoCutter
@@ -25,7 +26,7 @@ class FindInterestingVideoParts(context: Context) {
         val interestingVideoParts = InterestingVideoParts()
         val videoFrameExtractor = VideoFrameExtractor(videoUri, contentResolver)
       //  var frameExtractTimeUs = System.currentTimeMillis()
-        videoFrameExtractor.doExtract { frame ->
+        fastFrameSamples(videoUri) { frame ->
             //Log.i("Time", "Extract ${System.currentTimeMillis() - frameExtractTimeUs}")
 
            // val timeDetectUs = System.currentTimeMillis()
@@ -52,6 +53,22 @@ class FindInterestingVideoParts(context: Context) {
         markVideoAsCompletedInGallery(outputUri, contentResolver)
         Log.i("Time", "Cutting ${System.currentTimeMillis() - timeCutUs}")
         return outputUri
+    }
+
+    private fun fastFrameSamples(uri: Uri, nextFrame: (Frame) -> Unit) {
+        val metadata = MediaMetadataRetriever()
+        val openFileDescriptor = contentResolver.openFileDescriptor(uri, "r")!!.fileDescriptor
+        metadata.setDataSource(openFileDescriptor)
+
+        val time = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)!!
+        val timeInMillisec = time.toLong() * 1000
+
+        (0..100).forEach {
+            val timeUs = it * (timeInMillisec / 100)
+            val rawFrame = metadata.getFrameAtTime(timeUs)
+            val bmp = rawFrame!!.copy(Bitmap.Config.ARGB_8888, true)
+            nextFrame(Frame(bmp, timeUs))
+        }
     }
 
     class InterestingVideoParts {
