@@ -16,7 +16,6 @@ class VideoCutter(private val contentResolver: ContentResolver) {
         dstUri: Uri,
         timeUs: List<Range<Long>>
     ) {
-        var currentPresentationUs = 0L
         // Set up MediaExtractor to read from the source.
         val extractor = Utils.createMediaExtractor(srcUri, contentResolver)
         val trackCount = extractor.trackCount
@@ -74,7 +73,10 @@ class VideoCutter(private val contentResolver: ContentResolver) {
             var index = 0
             var endUs = timeUs[index].upper
             // trim only by sync frame, trimming more precisely need decoder and will made process much longer
-            extractor.seekTo(timeUs[index].lower, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+            extractor.seekTo(timeUs[index].lower, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+            var currentPresentationUs = 0L
+            var offsetUs = 0L
+            var startTimeUs = extractor.sampleTime
             while (true) {
                 bufferInfo.offset = offset
                 bufferInfo.size = extractor.readSampleData(dstBuf, offset)
@@ -83,7 +85,8 @@ class VideoCutter(private val contentResolver: ContentResolver) {
                     bufferInfo.size = 0
                     break
                 } else {
-                    if (endUs > 0 && extractor.sampleTime > endUs) {
+                    val isKeyFrame = extractor.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC != 0
+                    if (endUs > 0 && extractor.sampleTime > endUs && isKeyFrame) {
                         Log.d(TAG, "The current sample is over the trim end time.")
                         index++
                         if (index >= timeUs.size) {
@@ -91,8 +94,11 @@ class VideoCutter(private val contentResolver: ContentResolver) {
                         }
                         endUs = timeUs[index].upper
                         // trim only by sync frame, trimming more precisely need decoder and will made process much longer
-                        extractor.seekTo(timeUs[index].lower, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+                        extractor.seekTo(timeUs[index].lower, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+                        startTimeUs = extractor.sampleTime
+                        offsetUs = currentPresentationUs
                     } else {
+                        currentPresentationUs = offsetUs + extractor.sampleTime - startTimeUs
                         bufferInfo.presentationTimeUs = currentPresentationUs
                         bufferInfo.flags = extractor.sampleFlags
                         trackIndex = extractor.sampleTrackIndex
@@ -101,7 +107,6 @@ class VideoCutter(private val contentResolver: ContentResolver) {
                             bufferInfo
                         )
                         extractor.advance()
-                        currentPresentationUs += FRAME_PRESENTATION_TIME_US
                     }
                 }
             }

@@ -17,4 +17,4 @@ Processing image by TF-lite model pretty slow for video is around 70ms per frame
 ### Examples
 | Input video | Output video |
 | :-------- | :------- |
-| https://drive.google.com/file/d/1Fm9rnLAsEK0-8qbb170u1C9pvwd3mSbl/view?usp=sharing | https://drive.google.com/file/d/1EFrSMGT3X8zsTPut8Rm9lOUdrfxMkltO/view?usp=sharing |
+| https://drive.google.com/file/d/1Fm9rnLAsEK0-8qbb170u1C9pvwd3mSbl/view?usp=sharing | https://drive.google.com/file/d/19mrj-jhNYQNN1R7wazZHWum79R97nDzV/view?usp=sharing |
